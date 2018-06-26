@@ -35,12 +35,12 @@
 
 namespace srsenb {
 
-void connect_mme()
+void connect_mme(struct mme_cntxt_t *mme_cntxt)
 {
   socket_fd = 0;
   struct sockaddr_in mme_addr;
 
-  printf("Connecting to MME %s:%d\n", args.mme_addr.c_str(), MME_PORT);
+  printf("Connecting to MME %s:%d\n", mme_cntxt->mme_addr.c_str(), mme_cntxt->mme_port);
 
   if((socket_fd = socket(ADDR_FAMILY, SOCK_TYPE, PROTO)) == -1) {
     printf("Failed to create S1AP socket\n");
@@ -51,8 +51,8 @@ void connect_mme()
   memset(&mme_addr, 0, sizeof(struct sockaddr_in));
   mme_addr.sin_family = ADDR_FAMILY;
   mme_addr.sin_port = htons(MME_PORT);
-  if(inet_pton(AF_INET, args.mme_addr.c_str(), &(mme_addr.sin_addr)) != 1) {
-    printf("Error converting IP address (%s) to sockaddr_in structure\n", args.mme_addr.c_str());
+  if(inet_pton(AF_INET, mme_cntxt->mme_addr.c_str(), &(mme_addr.sin_addr)) != 1) {
+    printf("Error converting IP address (%s) to sockaddr_in structure\n", mme_cntxt->mme_addr.c_str());
     return false;
   }
 
@@ -63,6 +63,14 @@ void connect_mme()
 
   printf("SCTP socket established with MME\n");
   return true;
+}
+
+void main()
+{
+  struct mme_cntxt_t *mme_cntxt;
+
+  mme_cntxt = get_mme_cntxt();
+  connect_mme(mme_cntxt);
 }
 
 } // namespace srsenb
