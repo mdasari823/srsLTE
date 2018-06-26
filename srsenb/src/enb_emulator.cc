@@ -33,11 +33,20 @@
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
 
-namespace srsenb {
+#include <iostream>
+using namespace std;
 
-void connect_mme(struct mme_cntxt_t *mme_cntxt)
+#include "enb_emulator.h"
+
+void get_mme_cntxt(mme_cntxt_t *mme_cntxt)
 {
-  socket_fd = 0;
+  mme_cntxt->mme_addr = "127.0.1.100";
+  mme_cntxt->mme_port = 36412;
+}
+
+int connect_mme(mme_cntxt_t *mme_cntxt)
+{
+  int socket_fd = 0;
   struct sockaddr_in mme_addr;
 
   printf("Connecting to MME %s:%d\n", mme_cntxt->mme_addr.c_str(), mme_cntxt->mme_port);
@@ -50,7 +59,7 @@ void connect_mme(struct mme_cntxt_t *mme_cntxt)
   // Connect to the MME address
   memset(&mme_addr, 0, sizeof(struct sockaddr_in));
   mme_addr.sin_family = ADDR_FAMILY;
-  mme_addr.sin_port = htons(MME_PORT);
+  mme_addr.sin_port = htons(mme_cntxt->mme_port);
   if(inet_pton(AF_INET, mme_cntxt->mme_addr.c_str(), &(mme_addr.sin_addr)) != 1) {
     printf("Error converting IP address (%s) to sockaddr_in structure\n", mme_cntxt->mme_addr.c_str());
     return false;
@@ -65,12 +74,12 @@ void connect_mme(struct mme_cntxt_t *mme_cntxt)
   return true;
 }
 
-void main()
+int main()
 {
-  struct mme_cntxt_t *mme_cntxt;
+  mme_cntxt_t mme_cntxt;
 
-  mme_cntxt = get_mme_cntxt();
-  connect_mme(mme_cntxt);
+  get_mme_cntxt(&mme_cntxt);
+  connect_mme(&mme_cntxt);
+
+  return 0;
 }
-
-} // namespace srsenb

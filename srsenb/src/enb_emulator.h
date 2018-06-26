@@ -25,8 +25,14 @@
  */
 
 
-namespace srsenb {
+static const int ADDR_FAMILY      = AF_INET;
+static const int SOCK_TYPE        = SOCK_STREAM;
+static const int PROTO            = IPPROTO_SCTP;
 
 
+typedef struct mme_cntxt_ {
 
-} // namespace srsenb
+std::string mme_addr;
+int mme_port;
+
+}mme_cntxt_t;
