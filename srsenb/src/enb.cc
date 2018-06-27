@@ -130,93 +130,93 @@ bool enb::init(all_args_t *args_)
   
   // Init layers
   
-  /* Start Radio */
-  char *dev_name = NULL;
-  if (args->rf.device_name.compare("auto")) {
-    dev_name = (char*) args->rf.device_name.c_str();
-  }
-  
-  char *dev_args = NULL;
-  if (args->rf.device_args.compare("auto")) {
-    dev_args = (char*) args->rf.device_args.c_str();
-  }
+  ///* Start Radio */
+  //char *dev_name = NULL;
+  //if (args->rf.device_name.compare("auto")) {
+  //  dev_name = (char*) args->rf.device_name.c_str();
+  //}
+  //
+  //char *dev_args = NULL;
+  //if (args->rf.device_args.compare("auto")) {
+  //  dev_args = (char*) args->rf.device_args.c_str();
+  //}
 
-  if(!radio.init(dev_args, dev_name, args->enb.nof_ports))
-  {
-    printf("Failed to find device %s with args %s\n",
-           args->rf.device_name.c_str(), args->rf.device_args.c_str());
-    return false;
-  }    
-  
-  // Set RF options
-  if (args->rf.time_adv_nsamples.compare("auto")) {
-    radio.set_tx_adv(atoi(args->rf.time_adv_nsamples.c_str()));
-  }  
-  if (args->rf.burst_preamble.compare("auto")) {
-    radio.set_burst_preamble(atof(args->rf.burst_preamble.c_str()));    
-  }
-  
-  radio.set_manual_calibration(&args->rf_cal);
+  //if(!radio.init(dev_args, dev_name, args->enb.nof_ports))
+  //{
+  //  printf("Failed to find device %s with args %s\n",
+  //         args->rf.device_name.c_str(), args->rf.device_args.c_str());
+  //  return false;
+  //}    
+  //
+  //// Set RF options
+  //if (args->rf.time_adv_nsamples.compare("auto")) {
+  //  radio.set_tx_adv(atoi(args->rf.time_adv_nsamples.c_str()));
+  //}  
+  //if (args->rf.burst_preamble.compare("auto")) {
+  //  radio.set_burst_preamble(atof(args->rf.burst_preamble.c_str()));    
+  //}
+  //
+  //radio.set_manual_calibration(&args->rf_cal);
 
-  radio.set_rx_gain(args->rf.rx_gain);
-  radio.set_tx_gain(args->rf.tx_gain);    
-  
-  if (args->rf.dl_freq < 0) {
-    args->rf.dl_freq = 1e6*srslte_band_fd(args->rf.dl_earfcn); 
-    if (args->rf.dl_freq < 0) {
-      fprintf(stderr, "Error getting DL frequency for EARFCN=%d\n", args->rf.dl_earfcn);
-      return false; 
-    }  
-  }
-  if (args->rf.ul_freq < 0) {
-    if (args->rf.ul_earfcn == 0) {
-      args->rf.ul_earfcn = srslte_band_ul_earfcn(args->rf.dl_earfcn);
-    }
-    args->rf.ul_freq = 1e6*srslte_band_fu(args->rf.ul_earfcn); 
-    if (args->rf.ul_freq < 0) {
-      fprintf(stderr, "Error getting UL frequency for EARFCN=%d\n", args->rf.dl_earfcn);
-      return false; 
-    }  
-  }
-  ((srslte::log_filter*) phy_log[0])->console("Setting frequency: DL=%.1f Mhz, UL=%.1f MHz\n", args->rf.dl_freq/1e6, args->rf.ul_freq/1e6);
+  //radio.set_rx_gain(args->rf.rx_gain);
+  //radio.set_tx_gain(args->rf.tx_gain);    
+  //
+  //if (args->rf.dl_freq < 0) {
+  //  args->rf.dl_freq = 1e6*srslte_band_fd(args->rf.dl_earfcn); 
+  //  if (args->rf.dl_freq < 0) {
+  //    fprintf(stderr, "Error getting DL frequency for EARFCN=%d\n", args->rf.dl_earfcn);
+  //    return false; 
+  //  }  
+  //}
+  //if (args->rf.ul_freq < 0) {
+  //  if (args->rf.ul_earfcn == 0) {
+  //    args->rf.ul_earfcn = srslte_band_ul_earfcn(args->rf.dl_earfcn);
+  //  }
+  //  args->rf.ul_freq = 1e6*srslte_band_fu(args->rf.ul_earfcn); 
+  //  if (args->rf.ul_freq < 0) {
+  //    fprintf(stderr, "Error getting UL frequency for EARFCN=%d\n", args->rf.dl_earfcn);
+  //    return false; 
+  //  }  
+  //}
+  //((srslte::log_filter*) phy_log[0])->console("Setting frequency: DL=%.1f Mhz, UL=%.1f MHz\n", args->rf.dl_freq/1e6, args->rf.ul_freq/1e6);
 
-  radio.set_tx_freq(args->rf.dl_freq);
-  radio.set_rx_freq(args->rf.ul_freq);
+  //radio.set_tx_freq(args->rf.dl_freq);
+  //radio.set_rx_freq(args->rf.ul_freq);
 
-  radio.register_error_handler(rf_msg);
+  //radio.register_error_handler(rf_msg);
 
-  srslte_cell_t cell_cfg; 
-  phy_cfg_t     phy_cfg; 
-  rrc_cfg_t     rrc_cfg; 
-  
-  if (parse_cell_cfg(args, &cell_cfg)) {
-    fprintf(stderr, "Error parsing Cell configuration\n");
-    return false; 
-  }
-  if (parse_sibs(args, &rrc_cfg, &phy_cfg)) {
-    fprintf(stderr, "Error parsing SIB configuration\n");
-    return false; 
-  }
-  if (parse_rr(args, &rrc_cfg)) {
-    fprintf(stderr, "Error parsing Radio Resources configuration\n");
-    return false; 
-  }
-  if (parse_drb(args, &rrc_cfg)) {
-    fprintf(stderr, "Error parsing DRB configuration\n");
-    return false; 
-  }
-  rrc_cfg.inactivity_timeout_ms = args->expert.rrc_inactivity_timer;
-  
-  // Copy cell struct to rrc and phy 
-  memcpy(&rrc_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
-  memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
+  //srslte_cell_t cell_cfg; 
+  //phy_cfg_t     phy_cfg; 
+  //rrc_cfg_t     rrc_cfg; 
+  //
+  //if (parse_cell_cfg(args, &cell_cfg)) {
+  //  fprintf(stderr, "Error parsing Cell configuration\n");
+  //  return false; 
+  //}
+  //if (parse_sibs(args, &rrc_cfg, &phy_cfg)) {
+  //  fprintf(stderr, "Error parsing SIB configuration\n");
+  //  return false; 
+  //}
+  //if (parse_rr(args, &rrc_cfg)) {
+  //  fprintf(stderr, "Error parsing Radio Resources configuration\n");
+  //  return false; 
+  //}
+  //if (parse_drb(args, &rrc_cfg)) {
+  //  fprintf(stderr, "Error parsing DRB configuration\n");
+  //  return false; 
+  //}
+  //rrc_cfg.inactivity_timeout_ms = args->expert.rrc_inactivity_timer;
+  //
+  //// Copy cell struct to rrc and phy 
+  //memcpy(&rrc_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
+  //memcpy(&phy_cfg.cell, &cell_cfg, sizeof(srslte_cell_t));
 
-  // Init all layers   
-  phy.init(&args->expert.phy, &phy_cfg, &radio, &mac, phy_log);
-  mac.init(&args->expert.mac, &cell_cfg, &phy, &rlc, &rrc, &mac_log);
-  rlc.init(&pdcp, &rrc, &mac, &mac, &rlc_log);
-  pdcp.init(&rlc, &rrc, &gtpu, &pdcp_log);
-  rrc.init(&rrc_cfg, &phy, &mac, &rlc, &pdcp, &s1ap, &gtpu, &rrc_log);
+  //// Init all layers   
+  //phy.init(&args->expert.phy, &phy_cfg, &radio, &mac, phy_log);
+  //mac.init(&args->expert.mac, &cell_cfg, &phy, &rlc, &rrc, &mac_log);
+  //rlc.init(&pdcp, &rrc, &mac, &mac, &rlc_log);
+  //pdcp.init(&rlc, &rrc, &gtpu, &pdcp_log);
+  //rrc.init(&rrc_cfg, &phy, &mac, &rlc, &pdcp, &s1ap, &gtpu, &rrc_log);
   s1ap.init(args->enb.s1ap, &rrc, &s1ap_log);
   gtpu.init(args->enb.s1ap.gtp_bind_addr, args->enb.s1ap.mme_addr, &pdcp, &gtpu_log);
   

@@ -36,6 +36,10 @@
 #include <netinet/sctp.h>
 #include <arpa/inet.h>	//for inet_ntop()
 
+#include <iostream>
+
+using namespace std;
+
 namespace srsenb{
 
 bool s1ap::init(s1ap_args_t args_, rrc_interface_s1ap *rrc_, srslte::log *s1ap_log_)
@@ -112,7 +116,9 @@ void s1ap::run_thread()
   // S1AP rx loop
   while(running) {
     pdu->reset();
+    cout<<"After setup of s1 and before receiving msg from UE\n";
     pdu->N_bytes = recv(socket_fd, pdu->msg, sz, 0);
+    cout<<"After receiving message: \t"<<pdu->N_bytes;
 
     if(pdu->N_bytes <= 0) {
       mme_connected = false;
